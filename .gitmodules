@@ -3,7 +3,7 @@
 	url = https://github.com/barawn/pueo-python.git
 [submodule "pueo-utils"]
 	path = pueo-utils
-	url = https://github.com/barawn/pueo-utils.git
+	url = git@github.com:LBeaufore/pueo-utils.git
 [submodule "pyrfdc"]
 	path = pyrfdc
 	url = https://github.com/barawn/pyrfdc.git
