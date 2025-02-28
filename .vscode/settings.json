@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./pueo-utils/pueo-pyrun-extras",
+        "./pueo-utils",
+        "./pueo-python"
+    ]
+}
