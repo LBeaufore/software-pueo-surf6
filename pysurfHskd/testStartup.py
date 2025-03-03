@@ -9,7 +9,7 @@ import signal
 from pueoTimer import HskTimer
 from signalhandler import SignalHandler
 from pyHskHandler import HskHandler
-from surfStartupHandler import StartupHandler
+from surfStartupHandlerPi import StartupHandlerPi
 from HskProcessor import HskProcessor
 
 from pysoceeprom import PySOCEEPROM
@@ -24,6 +24,9 @@ import queue
 import logging
 
 LOG_NAME = "testStartup"
+RPI_PORT_NAME = "/dev/ttySC0"
+RPI_BAUD = 115200
+RPI_EEPROM = None # Will eventually want this for packet sorting
 
 # https://stackoverflow.com/questions/2183233/how-to-add-a-custom-loglevel-to-pythons-logging-facility/35804945
 def addLoggingLevel(levelName, levelNum, methodName=None):
@@ -58,20 +61,21 @@ addLoggingLevel('DETAIL', logging.INFO-5)
 logger = logging.getLogger(LOG_NAME)
 logging.basicConfig(level=10)
 
-eeprom = PySOCEEPROM(mode='AUTO')
-if eeprom.socid is None:
-    logger.error("cannot start up without an SOCID!")
-    exit(1)
+# eeprom = PySOCEEPROM(mode='AUTO')
+# if eeprom.socid is None:
+#     logger.error("cannot start up without an SOCID!")
+#     exit(1)
+eeprom=RPI_EEPROM
 
 logger.info("starting up with unique ID 0x%2.2x" % eeprom.socid)
 
     
-zynq = PyZynqMP()
+# zynq = PyZynqMP()
     
-surf = PueoSURF(WBSPI.find_device('osu,surf6revB'),'SPI')
-clk = SURF6Clock()
-clk.trenzClock.powerdown(True)
-clkrst = GPIO(GPIO.get_gpio_pin(3),'out')
+# surf = PueoSURF(WBSPI.find_device('osu,surf6revB'),'SPI')
+# clk = SURF6Clock()
+# clk.trenzClock.powerdown(True)
+# clkrst = GPIO(GPIO.get_gpio_pin(3),'out')
 
 # create the selector first
 sel = selectors.DefaultSelector()
@@ -105,14 +109,13 @@ handler = SignalHandler(sel)
 # spawn up the hsk handler
 hsk = HskHandler(sel,
                  eeprom,
-                 logName=LOG_NAME)
+                 logName=LOG_NAME,
+                 port=RPI_PORT_NAME,
+                 baud=RPI_BAUD)
 # and the surf startup handler
-startup = StartupHandler(LOG_NAME,
-                         surf,
-                         clk,
-                         clkrst,
-                         StartupHandler.StartupState.LOCATE_EYE,
-                         tickFifo)
+startup = StartupHandlerPi( LOG_NAME,
+                            StartupHandlerPi.StartupState.LOCATE_EYE,
+                            tickFifo)
 # sigh stupidity
 def runHandler(fd, mask):
     st = os.read(fd, 1)
@@ -196,7 +199,8 @@ if processor.restartCode:
     if code & processor.bmMagicValue:
         code = code ^ processor.bmMagicValue        
     elif code & processor.bmForceReprogram:
-        os.unlink(zynq.CURRENT)
+        # os.unlink(zynq.CURRENT)
+        logger.info("Would have unliked the zynq processor (If I HAD ONE!!!)")
         code = code ^ processor.bmForceReprogram
     exit(code)
 exit(0)
