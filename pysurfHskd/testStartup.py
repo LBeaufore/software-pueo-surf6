@@ -6,6 +6,7 @@ import os
 import struct
 import selectors
 import signal
+import argparse
 from pueoTimer import HskTimer
 from signalhandler import SignalHandler
 from pyHskHandler import HskHandler
@@ -17,16 +18,31 @@ from pyzynqmp import PyZynqMP
 from pueo.surf import PueoSURF
 from pueo.common.wbspi import WBSPI
 from pueo.common.bf import bf
-from s6clk import SURF6Clock
+# from s6clk import SURF6Clock
 from gpio import GPIO
 
 import queue
 import logging
 
+#https://stackoverflow.com/questions/4984647/accessing-dict-keys-like-an-attribute
+# For pretending eeprom
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--port", default=None)
+args = parser.parse_args()
+
 LOG_NAME = "testStartup"
 RPI_PORT_NAME = "/dev/ttySC0"
 RPI_BAUD = 115200
-RPI_EEPROM = None # Will eventually want this for packet sorting
+RPI_EEPROM_SOCID = 1 # Will eventually want this for packet sorting
+RPI_EEPROM_LOCATION = {'crate':0, 'slot':0}
+
+if (not args.port is None):
+    RPI_PORT_NAME = args.port
 
 # https://stackoverflow.com/questions/2183233/how-to-add-a-custom-loglevel-to-pythons-logging-facility/35804945
 def addLoggingLevel(levelName, levelNum, methodName=None):
@@ -65,10 +81,13 @@ logging.basicConfig(level=10)
 # if eeprom.socid is None:
 #     logger.error("cannot start up without an SOCID!")
 #     exit(1)
-eeprom=RPI_EEPROM
+# eeprom = PySOCEEPROM(mode=None)
+eeprom = AttrDict({'socid': RPI_EEPROM_SOCID, 'location': RPI_EEPROM_LOCATION}) # Pretending to be the pySOCEEPROM class
 
-logger.info("starting up with unique ID 0x%2.2x" % eeprom.socid)
-
+try:
+    logger.info("starting up with unique ID 0x%2.2x" % eeprom.socid)
+except Exception as e:
+    logger.info("This is a Raspberry Pi and doesn't have EEPROM info")
     
 # zynq = PyZynqMP()
     
@@ -128,6 +147,7 @@ sel.register(startup.rfd, selectors.EVENT_READ, runHandler)
 # this is all pretty clean now
 timer.start()
 
+zynq = AttrDict({'NEXT': "./temp/a.txt"}) # Will complain if it has to do anything in the firmware
 processor = HskProcessor(hsk,
                          zynq,
                          eeprom,

@@ -70,15 +70,15 @@ class StartupHandlerPi:
             self._runNextTick()
             return
         elif self.state == self.StartupState.STARTUP_BEGIN:
-            id = self.surf.read(0).to_bytes(4,'big')
-            if id != b'SURF':
-                self.logger.error("failed identifying SURF: %s", id.hex())
+            id = b'RPI'
+            if id != b'RPI':
+                self.logger.error("failed identifying RPI: %s", id.hex())
                 self.state == self.StartupState.STARTUP_FAILURE
                 self._runNextTick()
                 return
             else:
                 dv = "Raspberry Pi"
-                self.logger.info("this is SURF %s", str(dv))
+                self.logger.info("this is 'SURF' %s", str(dv))
                 self.state = self.StartupState.WAIT_CLOCK
                 self._runImmediate()
                 return
