@@ -121,7 +121,7 @@ class HskPacketHandler(Packetizer):
         
     def connection_made(self, transport):
         super(HskPacketHandler, self).connection_made(transport)
-        self.logger.info("opened port")
+        self.logger.info("opened port: (%s,%s)"%(transport.serial.port, transport.serial.baudrate))
 
     def connection_lost(self, exc):
         if isinstance(exc, Exception):
@@ -133,6 +133,7 @@ class HskPacketHandler(Packetizer):
     def handle_packet(self, packet):
         """ implement the handle_packet function """
         if len(packet) == 0:
+            self.logger.debug("got empty packet")
             return
         try:
             pkt = cobs.decode(packet)

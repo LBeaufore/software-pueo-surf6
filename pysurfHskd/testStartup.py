@@ -75,7 +75,7 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 addLoggingLevel('TRACE', logging.DEBUG-5)
 addLoggingLevel('DETAIL', logging.INFO-5)
 logger = logging.getLogger(LOG_NAME)
-logging.basicConfig(level=10)
+logging.basicConfig(level=9)# Was 10
 
 # eeprom = PySOCEEPROM(mode='AUTO')
 # if eeprom.socid is None:
